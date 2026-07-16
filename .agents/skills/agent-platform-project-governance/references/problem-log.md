@@ -287,3 +287,14 @@
 - 验证：重新执行修正后的 AST 检查命令，输出 `PowerShell AST OK`。
 - 预防：后续使用 PowerShell `[ref]` 参数时，先初始化变量；验证命令失败时先区分“检查命令问题”和“被检查脚本问题”。
 - 关联文件：`scripts/windows/*.ps1`、`progress.md`。
+
+## 2026-07-16 17:25 - GitHub 推送缺少本机认证凭据
+
+- 阶段：远程归档。
+- 现象：本地首次提交已创建，但执行 `git push -u origin main` 时长时间无输出；中断挂起进程后，用非交互模式重试返回 `fatal: could not read Username for 'https://github.com': terminal prompts disabled`。
+- 影响：本地提交已完成，但无法推送到 `https://github.com/atlantis68/agent-platform.git`；远程仓库仍等待首次推送。
+- 根因：本机没有可用于 HTTPS 推送的 GitHub 凭据；`gh` 未安装，SSH 探测 `git@github.com` 返回 `Permission denied (publickey)`，因此没有可替代的已认证通道。
+- 修复：当前需要用户在本机完成 GitHub HTTPS 凭据授权，或配置具备仓库写权限的 SSH key 后再重试 `git push -u origin main`。
+- 验证：`git status --short --branch` 显示本地在 `main` 分支且无未提交业务文件；非交互 push 明确返回凭据缺失；SSH 探测明确返回 publickey 权限不足。
+- 预防：后续首次推送 GitHub 前，先确认 `git push` 所需认证方式；不要在未确认凭据时长时间等待交互式进程。
+- 关联文件：`progress.md`、`.agents/skills/agent-platform-project-governance/references/problem-log.md`。
