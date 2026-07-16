@@ -1,0 +1,9 @@
+server:
+  port: 8002
+
+agent:
+  runtime:
+    # Phase 1 defaults to the local Python Runtime. Production deployment will
+    # replace this with service discovery or environment-specific configuration.
+    base-url: http://127.0.0.1:8001
+

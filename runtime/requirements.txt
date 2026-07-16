@@ -1,0 +1,5 @@
+# Phase 1 pins minor ranges to keep local verification reproducible.
+# Broad "<1" ranges may pull framework combinations with new deprecation
+# behavior before the platform has dependency compatibility checks.
+fastapi>=0.116,<0.117
+uvicorn[standard]>=0.35,<0.36

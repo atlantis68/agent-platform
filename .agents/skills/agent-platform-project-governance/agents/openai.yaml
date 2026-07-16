@@ -1,0 +1,5 @@
+interface:
+  display_name: "Agent Platform Governance"
+  short_description: "Agent 平台本机开发规则、注释标准和问题沉淀"
+  default_prompt: "Use $agent-platform-project-governance to continue the enterprise Agent platform with its project rules and issue log."
+
