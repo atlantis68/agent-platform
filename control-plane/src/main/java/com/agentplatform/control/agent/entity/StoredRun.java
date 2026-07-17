@@ -61,6 +61,9 @@ public class StoredRun {
         long outputEvents = auditEvents.stream()
                 .filter(event -> "run.output.delta".equals(event.type()))
                 .count();
+        long toolCalls = auditEvents.stream()
+                .filter(event -> "tool.completed".equals(event.type()))
+                .count();
         return new AgentRunSummary(
                 traceId,
                 runId,
@@ -69,7 +72,7 @@ public class StoredRun {
                 agentVersion,
                 startedAt,
                 completedAt,
-                new RunUsage(modelRequests, outputEvents, 0)
+                new RunUsage(modelRequests, outputEvents, toolCalls)
         );
     }
 }

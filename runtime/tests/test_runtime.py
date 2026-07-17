@@ -3,7 +3,12 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
-def build_runtime_run(run_id: str, conversation_id: str, text: str) -> dict:
+def build_runtime_run(
+    run_id: str,
+    conversation_id: str,
+    text: str,
+    enabled_tools: list[str] | None = None,
+) -> dict:
     """构造控制面协议使用的最小 Runtime 请求。
 
     这里刻意复用阶段 0 协议字段，让后续实现者在接入真实模型或工具之前，
@@ -25,7 +30,7 @@ def build_runtime_run(run_id: str, conversation_id: str, text: str) -> dict:
                 "modelName": "deterministic-phase1",
                 "temperature": 0.0,
             },
-            "enabledTools": [],
+            "enabledTools": enabled_tools or [],
             "enabledSkills": [],
         },
         "input": {
@@ -93,3 +98,48 @@ def test_second_run_uses_same_conversation_memory_window():
         "assistant",
     ]
     assert "第 2 轮" in memory[-1]["content"]
+
+
+def test_run_can_call_low_risk_http_tool():
+    client = TestClient(app)
+    payload = build_runtime_run(
+        "run_http_tool",
+        "conv_tools",
+        "请 echo 阶段 2 工具",
+        enabled_tools=["http_echo"],
+    )
+
+    assert client.post("/internal/v1/runs", json=payload).status_code == 200
+
+    events = client.get("/internal/v1/runs/run_http_tool/events").json()["events"]
+    assert [event["type"] for event in events] == [
+        "run.started",
+        "model.requested",
+        "tool.requested",
+        "tool.completed",
+        "run.output.delta",
+        "model.completed",
+        "run.completed",
+    ]
+    tool_event = next(event for event in events if event["type"] == "tool.completed")
+    assert tool_event["payload"]["toolName"] == "http_echo"
+    assert tool_event["payload"]["riskLevel"] == "LOW"
+    assert tool_event["payload"]["output"]["length"] > 0
+
+
+def test_run_can_call_low_risk_mcp_tool():
+    client = TestClient(app)
+    payload = build_runtime_run(
+        "run_mcp_tool",
+        "conv_tools_mcp",
+        "请查询 mcp 时间",
+        enabled_tools=["mcp_local_time"],
+    )
+
+    assert client.post("/internal/v1/runs", json=payload).status_code == 200
+
+    events = client.get("/internal/v1/runs/run_mcp_tool/events").json()["events"]
+    tool_event = next(event for event in events if event["type"] == "tool.completed")
+    assert tool_event["payload"]["toolName"] == "mcp_local_time"
+    assert tool_event["payload"]["sourceType"] == "mcp"
+    assert tool_event["payload"]["output"]["timezone"] == "Asia/Shanghai"

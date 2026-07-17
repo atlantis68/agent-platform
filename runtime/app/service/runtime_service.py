@@ -6,6 +6,9 @@ from fastapi import HTTPException
 
 from app.dto.runtime import RuntimeRunRequest
 from app.entity.message import Message
+from app.entity.tool import ToolResult
+from app.service.tool_executor import execute_tool
+from app.service.tool_registry import build_tool_arguments, get_tool
 from app.utils.time import utc_now
 
 
@@ -42,7 +45,10 @@ def append_event(
     )
 
 
-def generate_local_response(request: RuntimeRunRequest) -> str:
+def generate_local_response(
+    request: RuntimeRunRequest,
+    tool_results: list[ToolResult] | None = None,
+) -> str:
     """生成阶段 1 使用的确定性本地模型回复。
 
     这里不是测试里的 mock，而是一个明确命名的开发模型供应商。这样可以在没有
@@ -51,10 +57,39 @@ def generate_local_response(request: RuntimeRunRequest) -> str:
 
     conversation = CONVERSATION_MESSAGES[request.context.conversationId]
     user_turns = sum(1 for message in conversation if message.role == "user")
-    return (
+    response = (
         f"【本地开发模型】第 {user_turns} 轮收到：{request.input.text}。"
         f"Agent={request.agentSnapshot.agentId}，Trace={request.traceId}。"
     )
+    if tool_results:
+        tool_summaries = "；".join(
+            f"{result.tool_name}={result.output}" for result in tool_results
+        )
+        response += f" 工具结果：{tool_summaries}。"
+    return response
+
+
+def select_demo_tools(request: RuntimeRunRequest) -> list[str]:
+    """根据阶段 2 demo 规则选择本次运行要调用的工具。
+
+    选择过程同时检查控制面下发的 enabledTools 白名单。这样即使用户输入中包含
+    工具触发词，Runtime 也不会调用未授权工具。
+    """
+
+    enabled = set(request.agentSnapshot.enabledTools)
+    text = request.input.text
+    lowered_text = text.lower()
+    selected: list[str] = []
+
+    if "http_echo" in enabled and ("echo" in lowered_text or "回显" in text):
+        selected.append("http_echo")
+    if "mcp_local_time" in enabled and (
+        ("mcp" in lowered_text and ("时间" in text or "time" in lowered_text))
+        or "当前时间" in text
+    ):
+        selected.append("mcp_local_time")
+
+    return selected
 
 
 def execute_run(request: RuntimeRunRequest) -> None:
@@ -91,7 +126,63 @@ def execute_run(request: RuntimeRunRequest) -> None:
             "modelName": request.agentSnapshot.model.modelName,
         },
     )
-    assistant_text = generate_local_response(request)
+    tool_results: list[ToolResult] = []
+    for tool_name in select_demo_tools(request):
+        tool = get_tool(tool_name)
+        if tool is None:
+            append_event(
+                events,
+                request,
+                "tool.failed",
+                {
+                    "toolName": tool_name,
+                    "reason": "工具未注册",
+                },
+            )
+            continue
+
+        arguments = build_tool_arguments(tool.name, request.input.text)
+        append_event(
+            events,
+            request,
+            "tool.requested",
+            {
+                "toolName": tool.name,
+                "sourceType": tool.source_type,
+                "riskLevel": tool.risk_level,
+                "input": arguments,
+            },
+        )
+        try:
+            result = execute_tool(tool, arguments)
+        except ValueError as exc:
+            append_event(
+                events,
+                request,
+                "tool.failed",
+                {
+                    "toolName": tool.name,
+                    "sourceType": tool.source_type,
+                    "riskLevel": tool.risk_level,
+                    "reason": str(exc),
+                },
+            )
+            continue
+
+        tool_results.append(result)
+        append_event(
+            events,
+            request,
+            "tool.completed",
+            {
+                "toolName": result.tool_name,
+                "sourceType": result.source_type,
+                "riskLevel": result.risk_level,
+                "output": result.output,
+            },
+        )
+
+    assistant_text = generate_local_response(request, tool_results)
     append_event(events, request, "run.output.delta", {"text": assistant_text})
     append_event(
         events,

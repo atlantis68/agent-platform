@@ -1,6 +1,6 @@
 # 阶段 2 工具系统与 MCP v1 实现计划
 
-> **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。项目规则覆盖默认计划模板：本项目暂不执行 Git 提交，所有代码备注必须使用中文。
+> **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [x]`）语法来跟踪进度。项目规则覆盖默认计划模板：Git 写操作必须先获得用户明确授权，所有代码备注必须使用中文。
 
 **目标：** 在不破坏阶段 1 Agent Run 闭环的前提下，让 Agent 能调用一个低风险 HTTP 工具和一个 MCP tool，并在控制面展示完整审计事件。
 
@@ -80,7 +80,7 @@
 - 创建：`control-plane/src/main/java/com/agentplatform/control/agent/dto/ToolDefinition.java`
 - 创建：`control-plane/src/main/java/com/agentplatform/control/agent/dto/ToolRiskLevel.java`
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```java
 @Test
@@ -95,7 +95,7 @@ void listToolsReturnsPhaseTwoDemoTools() throws Exception {
 }
 ```
 
-- [ ] **步骤 2：运行测试确认失败**
+- [x] **步骤 2：运行测试确认失败**
 
 运行：
 
@@ -105,7 +105,7 @@ mvn -f control-plane\pom.xml "-Dtest=com.agentplatform.control.agent.controller.
 
 预期：失败，原因是 `ToolRegistryControllerTest` 或 `/api/v1/tools` 尚不存在。
 
-- [ ] **步骤 3：实现最小控制面工具注册表**
+- [x] **步骤 3：实现最小控制面工具注册表**
 
 实现要点：
 
@@ -123,7 +123,7 @@ public record ToolDefinition(
 
 `ToolRegistryService` 返回 `http_echo` 和 `mcp_local_time` 两个内存工具定义。所有 JavaDoc 和注释必须使用中文。
 
-- [ ] **步骤 4：运行测试确认通过**
+- [x] **步骤 4：运行测试确认通过**
 
 运行：
 
@@ -144,7 +144,7 @@ mvn -f control-plane\pom.xml "-Dtest=com.agentplatform.control.agent.controller.
 - 创建：`runtime/app/service/mcp_tool_client.py`
 - 修改：`runtime/app/service/runtime_service.py`
 
-- [ ] **步骤 1：编写 HTTP 工具调用失败测试**
+- [x] **步骤 1：编写 HTTP 工具调用失败测试**
 
 ```python
 def test_run_can_call_low_risk_http_tool():
@@ -168,7 +168,7 @@ def test_run_can_call_low_risk_http_tool():
     assert tool_event["payload"]["riskLevel"] == "LOW"
 ```
 
-- [ ] **步骤 2：编写 MCP tool 失败测试**
+- [x] **步骤 2：编写 MCP tool 失败测试**
 
 ```python
 def test_run_can_call_low_risk_mcp_tool():
@@ -183,7 +183,7 @@ def test_run_can_call_low_risk_mcp_tool():
     assert tool_event["payload"]["sourceType"] == "mcp"
 ```
 
-- [ ] **步骤 3：运行测试确认失败**
+- [x] **步骤 3：运行测试确认失败**
 
 运行：
 
@@ -193,7 +193,7 @@ runtime\.venv\Scripts\python -m pytest runtime\tests -q
 
 预期：新增测试失败，原因是 Runtime 尚未产生工具事件。
 
-- [ ] **步骤 4：实现 Runtime 工具注册与执行**
+- [x] **步骤 4：实现 Runtime 工具注册与执行**
 
 实现要点：
 
@@ -209,7 +209,7 @@ class ToolDefinition(BaseModel):
 
 `tool_executor.py` 只允许执行 `LOW` 风险工具。`mcp_tool_client.py` 先提供 `mcp_local_time` 的本地适配实现，后续替换为真实 MCP SDK client 时保持返回结构不变。
 
-- [ ] **步骤 5：运行测试确认通过**
+- [x] **步骤 5：运行测试确认通过**
 
 运行：
 
@@ -227,7 +227,7 @@ runtime\.venv\Scripts\python -m pytest runtime\tests -q
 - 修改：`control-plane/src/test/java/com/agentplatform/control/agent/controller/AgentRunControllerTest.java`
 - 修改：`control-plane/src/main/resources/static/index.html`
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```java
 @Test
@@ -251,7 +251,7 @@ void runSummaryCountsCompletedToolEvents() throws Exception {
 }
 ```
 
-- [ ] **步骤 2：运行测试确认失败**
+- [x] **步骤 2：运行测试确认失败**
 
 运行：
 
@@ -261,15 +261,15 @@ mvn -f control-plane\pom.xml "-Dtest=com.agentplatform.control.agent.controller.
 
 预期：`toolCalls` 仍为 0，测试失败。
 
-- [ ] **步骤 3：实现用量统计**
+- [x] **步骤 3：实现用量统计**
 
 在 `StoredRun.toSummary()` 中统计 `tool.completed` 事件数量，写入 `new RunUsage(modelRequests, outputEvents, toolCalls)`。
 
-- [ ] **步骤 4：更新运行台展示**
+- [x] **步骤 4：更新运行台展示**
 
 `index.html` 的事件区域保持简单，不做复杂前端框架改造；只需要保证 SSE 事件中的工具 payload 可读。
 
-- [ ] **步骤 5：运行控制面测试**
+- [x] **步骤 5：运行控制面测试**
 
 运行：
 
@@ -288,7 +288,7 @@ mvn -f control-plane\pom.xml clean test
 - 修改：`task_plan.md`
 - 修改：`progress.md`
 
-- [ ] **步骤 1：创建阶段 2 展示文档**
+- [x] **步骤 1：创建阶段 2 展示文档**
 
 文档必须包含：
 
@@ -300,11 +300,11 @@ mvn -f control-plane\pom.xml clean test
 - 已知限制。
 - 阶段 3 入口条件。
 
-- [ ] **步骤 2：更新项目入口文档**
+- [x] **步骤 2：更新项目入口文档**
 
 `README.md` 增加阶段 2 成果展示链接。`task_plan.md` 将阶段 2 状态从 `planned` 更新为 `complete`，但只有在阶段 2 代码和验收完成后才能执行该步骤。
 
-- [ ] **步骤 3：运行文档扫描**
+- [x] **步骤 3：运行文档扫描**
 
 运行：
 
@@ -321,7 +321,7 @@ rg -n "TO[D]O|待[定]|占[位]|后续[补]充" docs README.md task_plan.md
 - 修改：`progress.md`
 - 修改：`.agents/skills/agent-platform-project-governance/references/problem-log.md`
 
-- [ ] **步骤 1：运行 Runtime 测试**
+- [x] **步骤 1：运行 Runtime 测试**
 
 ```powershell
 runtime\.venv\Scripts\python -m pytest runtime\tests -q
@@ -329,7 +329,7 @@ runtime\.venv\Scripts\python -m pytest runtime\tests -q
 
 预期：全部通过。
 
-- [ ] **步骤 2：运行控制面测试**
+- [x] **步骤 2：运行控制面测试**
 
 ```powershell
 mvn -f control-plane\pom.xml clean test
@@ -337,7 +337,7 @@ mvn -f control-plane\pom.xml clean test
 
 预期：全部通过。
 
-- [ ] **步骤 3：本机端到端验收**
+- [x] **步骤 3：本机端到端验收**
 
 启动 Python Runtime 和 Java 控制面后，创建包含 `echo` 和 `mcp 时间` 的 Agent Run，验收：
 
@@ -346,7 +346,7 @@ mvn -f control-plane\pom.xml clean test
 - `usage.toolCalls` 大于 0。
 - 高风险工具未开放。
 
-- [ ] **步骤 4：归档结果**
+- [x] **步骤 4：归档结果**
 
 把验证命令、结果、问题修复写入：
 

@@ -6,27 +6,27 @@
 
 ## Active Phase
 
-阶段 1：最小 Agent Runtime（complete，用户已验收通过）。阶段 2：工具系统与 MCP v1（planned，未开始编码）。
+阶段 2：工具系统与 MCP v1（complete，本机自动化与端到端验收通过）。阶段 3：RAG 与企业知识库（planned，未开始编码）。
 
 ## Next Step
 
-下一步建议进入阶段 2：工具系统与 MCP v1。当前只完成规划和入口说明，不自动启动编码；只有在用户明确要求“开始阶段 2”后，才进入阶段 2 实施。
+下一步建议进入阶段 3：RAG 与企业知识库。当前只完成阶段 3 入口条件说明，不自动启动编码；只有在用户明确要求“开始阶段 3”后，才进入阶段 3 实施。
 
-阶段 2 推荐采用默认 demo 闭环先行：
+阶段 3 建议先做最小 RAG 闭环：
 
-1. 控制面先实现 Tool Registry，定义工具名称、描述、输入 schema、来源类型和风险等级。
-2. Python Runtime 再实现低风险 HTTP 工具与 MCP tool 的本地适配，产生标准工具事件。
-3. 控制面最后统计 `tool.completed` 事件，展示审计事件和 SSE 工具事件。
-4. 阶段结束时创建 `docs/delivery/phase-2-showcase.md`，并运行 Runtime、控制面和端到端验收。
+1. 先定义文档导入协议、文档元数据和权限边界。
+2. 再实现本地 demo 文档切分、Embedding 抽象和检索接口。
+3. 控制面展示回答来源和引用片段，确保 RAG 可审计。
+4. 阶段结束时创建 `docs/delivery/phase-3-showcase.md`，并运行 Runtime、控制面和端到端验收。
 
-阶段 2 启动前可选信息：
+阶段 3 启动前建议确认的信息：
 
 | 信息 | 是否必需 | 默认值 | 影响 |
 |---|---|---|---|
-| 首批 HTTP 工具 | 否 | `http_echo` demo 工具 | 不提供也能完成工具闭环；提供后可接入真实业务接口 |
-| 首批 MCP server | 否 | `mcp_local_time` 本地 demo tool | 不提供也能完成 MCP tool 抽象；提供后可接入真实 MCP server |
-| 工具风险策略 | 否 | 只允许 `LOW` 风险只读工具 | 影响是否开放写操作；当前默认全部拒绝高风险写操作 |
-| 新增 SDK 依赖授权 | 否 | 先不新增真实 MCP SDK | 影响是否直接接入官方/第三方 MCP SDK |
+| 首批文档来源 | 否 | 本地 demo Markdown 文档 | 影响 RAG 回答的业务真实性 |
+| Embedding 实现 | 否 | 本地 deterministic demo 向量或轻量本地适配 | 影响是否需要外部模型凭据 |
+| 知识权限策略 | 否 | 默认只允许同租户知识 | 影响越权检索防护 |
+| 向量库选择 | 否 | 先用内存或本地轻量实现 | 影响是否引入 PostgreSQL/pgvector |
 
 ## Phases
 
@@ -34,8 +34,8 @@
 |---|---|---|---|
 | 0 | 架构与协议基线 | complete | 架构总览、分阶段路线、Runtime 协议、阶段展示稿 |
 | 1 | 最小 Agent Runtime | complete | 可创建 Agent、发起运行、流式返回、短期记忆 v1、基础审计 |
-| 2 | 工具系统与 MCP v1 | planned | Tool Registry、HTTP 工具、MCP Client、工具审计、风险分级；实施计划已创建，等待用户确认后执行 |
-| 3 | RAG 与企业知识库 | pending | 文档导入、切分、向量检索、混合检索、引用溯源、知识权限 |
+| 2 | 工具系统与 MCP v1 | complete | Tool Registry、HTTP 工具、MCP demo tool、工具审计、风险分级、SSE 展示和 `usage.toolCalls` |
+| 3 | RAG 与企业知识库 | planned | 文档导入、切分、向量检索、混合检索、引用溯源、知识权限 |
 | 4 | 长期记忆 | pending | 记忆类型、写入策略、检索策略、冲突处理、用户可管理 |
 | 5 | Skill 能力体系 | pending | Skill Manifest、版本、依赖工具、内部市场、Skill 评测 |
 | 6 | CLI 与沙箱执行 | pending | 隔离工作区、命令策略、资源限制、审批、输出脱敏 |

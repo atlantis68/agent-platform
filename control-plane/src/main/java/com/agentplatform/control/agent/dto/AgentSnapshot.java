@@ -33,4 +33,22 @@ public record AgentSnapshot(
                 List.of()
         );
     }
+
+    /**
+     * 构造阶段 2 的默认 Agent 快照。
+     *
+     * <p>阶段 2 只启用 LOW 风险 demo 工具。这里把工具白名单固化进快照，
+     * 是为了让审计记录可以复现“当次运行到底被授权了哪些工具”。</p>
+     */
+    public static AgentSnapshot phaseTwoDefault(String agentId) {
+        return new AgentSnapshot(
+                agentId,
+                "1.1.0",
+                "企业通用助手",
+                "你是企业内部通用助手。阶段 2 允许调用低风险 HTTP demo 工具和 MCP 本地时间工具。",
+                new ModelConfig("local-dev", "deterministic-phase2", 0.0),
+                List.of("http_echo", "mcp_local_time"),
+                List.of()
+        );
+    }
 }

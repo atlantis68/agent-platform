@@ -95,6 +95,39 @@ class AgentRunControllerTest {
     }
 
     @Test
+    void runSummaryCountsCompletedToolEvents() throws Exception {
+        when(runtimeClient.submitRun(any(RuntimeRunRequest.class)))
+                .thenReturn(new RuntimeAcceptedResponse("run_mocked", "accepted"));
+        when(runtimeClient.fetchEvents(any(String.class)))
+                .thenReturn(List.of(
+                        new RunEvent("evt_1", "tr_mocked", "run_mocked", "tool.completed", 1,
+                                "2026-07-16T09:00:00Z", Map.of("toolName", "http_echo")),
+                        new RunEvent("evt_2", "tr_mocked", "run_mocked", "run.completed", 2,
+                                "2026-07-16T09:00:01Z", Map.of("status", "completed"))
+                ));
+
+        String response = mockMvc.perform(post("/api/v1/agent-runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "agentId": "agent_general_001",
+                                  "input": {"type": "text", "text": "工具统计"},
+                                  "context": {"conversationId": "conv_tool_usage", "source": "test"}
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String runId = response.replaceAll(".*\\\"runId\\\":\\\"([^\\\"]+)\\\".*", "$1");
+
+        mockMvc.perform(get("/api/v1/agent-runs/" + runId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.usage.toolCalls").value(1));
+    }
+
+    @Test
     void eventStreamUsesUtf8ForChinesePayload() throws Exception {
         when(runtimeClient.submitRun(any(RuntimeRunRequest.class)))
                 .thenReturn(new RuntimeAcceptedResponse("run_mocked", "accepted"));

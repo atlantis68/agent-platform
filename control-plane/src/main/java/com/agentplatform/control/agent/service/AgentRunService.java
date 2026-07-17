@@ -42,7 +42,7 @@ public class AgentRunService {
         String runId = "run_" + UUID.randomUUID().toString().replace("-", "");
         String traceId = "tr_" + UUID.randomUUID().toString().replace("-", "");
         RunContext context = request.contextOrDefault();
-        AgentSnapshot snapshot = AgentSnapshot.phaseOneDefault(request.agentId());
+        AgentSnapshot snapshot = AgentSnapshot.phaseTwoDefault(request.agentId());
 
         RuntimeRunRequest runtimeRequest = new RuntimeRunRequest(
                 traceId,

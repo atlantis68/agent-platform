@@ -25,6 +25,8 @@ class AgentSnapshot(BaseModel):
     name: str
     systemPrompt: str
     model: ModelConfig = Field(default_factory=ModelConfig)
+    # enabledTools 是控制面授权给本次运行的工具白名单。Runtime 只能在该列表内选择工具，
+    # 不能仅根据用户输入文本自行调用未启用工具。
     enabledTools: list[str] = Field(default_factory=list)
     enabledSkills: list[str] = Field(default_factory=list)
 

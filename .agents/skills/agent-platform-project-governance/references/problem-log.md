@@ -298,3 +298,25 @@
 - 验证：`git status --short --branch` 显示本地在 `main` 分支且无未提交业务文件；非交互 push 明确返回凭据缺失；SSH 探测明确返回 publickey 权限不足。
 - 预防：后续首次推送 GitHub 前，先确认 `git push` 所需认证方式；不要在未确认凭据时长时间等待交互式进程。
 - 关联文件：`progress.md`、`.agents/skills/agent-platform-project-governance/references/problem-log.md`。
+
+## 2026-07-16 17:36 - Windows 环境缺少 IANA tzdata
+
+- 阶段：阶段 2，Runtime MCP demo tool。
+- 现象：`mcp_local_time` 首次实现使用 `ZoneInfo("Asia/Shanghai")`，Runtime 测试失败，错误为 `ZoneInfoNotFoundError: 'No time zone found with key Asia/Shanghai'`。
+- 影响：MCP 本地时间 demo tool 无法在当前 Windows Python 环境稳定执行，导致阶段 2 Runtime 工具测试无法通过。
+- 根因：Windows Python 环境没有系统 IANA 时区数据库，项目也没有安装 `tzdata` Python 包；`zoneinfo` 无法解析 `Asia/Shanghai`。
+- 修复：阶段 2 demo tool 不新增依赖，改为对 `Asia/Shanghai` 使用固定 UTC+8 偏移；真实 MCP server 接入后再由外部服务或 SDK 处理完整时区能力。
+- 验证：重新运行 `runtime\.venv\Scripts\python -m pytest runtime\tests -q`，输出 `4 passed`。
+- 预防：后续在 Windows 上使用 Python `zoneinfo` 时，要么显式添加 `tzdata` 依赖，要么对 demo 场景使用固定偏移并写清楚边界。
+- 关联文件：`runtime/app/service/mcp_tool_client.py`、`runtime/tests/test_runtime.py`。
+
+## 2026-07-16 17:44 - PowerShell here-string 端到端请求中文触发词损耗
+
+- 阶段：阶段 2，本机端到端验收。
+- 现象：第一次用 PowerShell here-string 管道执行 Python `httpx` 脚本发送中文提示词时，Agent Run 只触发 `http_echo`，没有触发 `mcp_local_time`。
+- 影响：工具链路本身可用，但端到端取证结果只有 `usage.toolCalls=1`，不能证明同一次运行同时调用 HTTP 工具和 MCP tool。
+- 根因：PowerShell here-string 到 Python stdin 的链路中中文可能发生编码损耗，Runtime 关键词规则没有匹配到中文“时间”。
+- 修复：端到端取证脚本改用 Unicode 转义构造同一语义的提示词，避免 shell 编码干扰。
+- 验证：重新创建 Agent Run 后，审计事件包含两组 `tool.requested/tool.completed`，`toolCompleted=[http_echo,mcp_local_time]`，`usage.toolCalls=2`。
+- 预防：后续 Windows 端到端脚本涉及中文请求体时，优先使用 Python 内部 Unicode 字符串、JSON 文件或 Unicode 转义，不在 PowerShell 命令行中直接拼复杂中文 JSON。
+- 关联文件：`docs/delivery/phase-2-showcase.md`、`progress.md`。

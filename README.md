@@ -6,20 +6,21 @@
 
 - 阶段 0：架构与协议基线，已交付文档基线。
 - 阶段 1：最小 Agent Runtime 闭环，已完成本机交付、修复收口和用户验收。
-- 下一阶段：阶段 2，工具系统与 MCP v1；已完成实施计划，尚未开始编码，需用户明确要求后再执行。
+- 阶段 2：工具系统与 MCP v1，已完成本机交付，支持 Tool Registry、低风险 HTTP demo 工具、MCP demo tool、工具审计和 `usage.toolCalls`。
+- 下一阶段：阶段 3，RAG 与企业知识库；需用户明确要求后再执行。
 
-## 阶段 2 启动建议
+## 阶段 2 已交付能力
 
-阶段 2 的目标不是一次性接入所有真实工具，而是先打通 Agent 调用工具的最小闭环。推荐默认使用 `http_echo` 和 `mcp_local_time` 两个低风险 demo 工具完成协议、审计和展示链路，等闭环稳定后再替换为真实 HTTP API 或真实 MCP server。
+阶段 2 的目标不是一次性接入所有真实工具，而是先打通 Agent 调用工具的最小闭环。本阶段已经使用 `http_echo` 和 `mcp_local_time` 两个低风险 demo 工具完成协议、审计和展示链路。
 
-阶段 2 建议按以下顺序推进：
+阶段 2 已按以下顺序落地：
 
-1. 先实现控制面 Tool Registry，固定工具元数据、输入 schema、来源类型和风险等级。
-2. 再实现 Runtime 工具注册与执行，确保每次工具调用都产生 `tool.requested`、`tool.completed` 或 `tool.failed` 事件。
-3. 然后补齐控制面运行摘要、审计查询和 SSE 展示，保证工具事件可追踪。
-4. 最后做端到端验收和阶段 2 成果展示文档。
+1. 控制面 Tool Registry：固定工具元数据、输入 schema、来源类型和风险等级。
+2. Runtime 工具注册与执行：每次工具调用产生 `tool.requested`、`tool.completed` 或 `tool.failed` 事件。
+3. 控制面运行摘要与展示：审计查询、SSE 和 `usage.toolCalls` 均可看到工具调用。
+4. 阶段 2 成果展示：记录自动化验证和本机端到端验收结果。
 
-如果没有真实工具配置，可以直接按默认 demo 工具启动阶段 2。如果需要接入真实业务工具，请先提供首批 HTTP 工具、首批 MCP server、工具风险策略和是否允许新增 SDK 依赖。
+真实 HTTP API 和真实 MCP server 尚未接入。后续接入前，需要先提供接口配置、鉴权方式、风险等级和是否允许新增 SDK 依赖。
 
 ## 项目执行约束
 
@@ -46,6 +47,7 @@
 - [Runtime 协议基线](docs/architecture/01-runtime-contracts.md)
 - [阶段 0 成果展示](docs/delivery/phase-0-showcase.md)
 - [阶段 1 成果展示](docs/delivery/phase-1-showcase.md)
+- [阶段 2 成果展示](docs/delivery/phase-2-showcase.md)
 - [阶段 0 实施计划](docs/superpowers/plans/2026-07-15-agent-platform-phase0.md)
 - [阶段 1 实施计划](docs/superpowers/plans/2026-07-15-agent-platform-phase1.md)
 - [阶段 2 实施计划](docs/superpowers/plans/2026-07-16-agent-platform-phase2-tool-mcp.md)
